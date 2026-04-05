@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+/* Hide scrollbars globally */
+html,
+body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+/* ── Intro: blinking cursor ──────────────────────────────── */
+@keyframes introCursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.intro-cursor {
+  animation: introCursorBlink 0.75s step-end infinite;
+}
+
+/* ── Intro: scroll-line drop ─────────────────────────────── */
+@keyframes introScrollDrop {
+  0%   { transform: translateY(-100%); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.intro-scroll-line {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, #fff 40%, transparent);
+  animation: introScrollDrop 1.6s ease-in-out infinite;
+}
+
+/* ── Main site: fade in after intro ─────────────────────── */
+@keyframes appEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.app-enter {
+  animation: appEnter 0.4s ease forwards;
+}
+

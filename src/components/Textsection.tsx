@@ -2,7 +2,7 @@ import React from "react";
 
 type WordStyle = "solid" | "outlined" | "accent";
 
-const words1: string[] = [
+const words1 = [
   "Growth",
   "Scale",
   "Momentum",
@@ -11,7 +11,7 @@ const words1: string[] = [
   "Expand",
 ];
 
-const words2: string[] = [
+const words2 = [
   "ELEVATE",
   "DISRUPT",
   "DOMINATE",
@@ -77,40 +77,44 @@ export default function MarqueeSection() {
         .marquee-section {
           background: #000;
           width: 100%;
-          padding: 20px 0;
+          padding: 60px 0; /* 👈 more breathing space */
           overflow: hidden;
           position: relative;
         }
 
-        .marquee-section::before,
-        .marquee-section::after {
+        /* ✅ TOP FADE (stronger & smoother) */
+        .marquee-section::before {
           content: '';
           position: absolute;
+          top: 0;
           left: 0;
           right: 0;
+          height: 120px;
+          background: linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.8) 40%, transparent 100%);
           z-index: 3;
           pointer-events: none;
         }
 
-        .marquee-section::before {
-          top: 0;
-          height: 60px;
-          background: linear-gradient(to bottom, #000, transparent);
-        }
-
+        /* ✅ BOTTOM FADE (enhanced, smoother) */
         .marquee-section::after {
+          content: '';
+          position: absolute;
           bottom: 0;
-          height: 80px;
-          background: linear-gradient(to bottom, transparent, #000);
+          left: 0;
+          right: 0;
+          height: 120px;
+          background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 60%, #000 100%);
+          z-index: 3;
+          pointer-events: none;
         }
 
         .marquee-label {
           text-align: center;
-          font-size: 10px;
-          letter-spacing: 0.3em;
-          color: rgba(255,255,255,0.3);
+          font-size: 12px;
+          letter-spacing: 0.4em;
+          color: rgba(255,255,255,0.4);
           text-transform: uppercase;
-          margin-bottom: 20px;
+          margin-bottom: 30px;
         }
 
         .marquee-track-wrap {
@@ -124,7 +128,7 @@ export default function MarqueeSection() {
           position: absolute;
           top: 0;
           bottom: 0;
-          width: 100px;
+          width: 120px;
           z-index: 2;
           pointer-events: none;
         }
@@ -160,49 +164,50 @@ export default function MarqueeSection() {
           100% { transform: translateX(0); }
         }
 
+        /* ✅ BIGGER TEXT */
         .word {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 56px;
-          letter-spacing: 0.04em;
-          padding: 0 20px;
+          font-size: 90px; /* 👈 increased */
+          letter-spacing: 0.05em;
+          padding: 0 28px;
           display: inline-block;
-          color: rgba(255,255,255,0.85);
+          color: rgba(255,255,255,0.9);
           line-height: 1;
         }
 
         .word.sm {
-          font-size: 36px;
-          color: rgba(255,255,255,0.35);
+          font-size: 60px; /* 👈 increased */
+          color: rgba(255,255,255,0.4);
         }
 
         .word.outlined {
-          -webkit-text-stroke: 1.5px rgba(255,255,255,0.25);
+          -webkit-text-stroke: 2px rgba(255,255,255,0.25);
           color: transparent;
         }
 
         .word.sm.outlined {
-          -webkit-text-stroke: 1px rgba(255,255,255,0.15);
+          -webkit-text-stroke: 1.5px rgba(255,255,255,0.2);
           color: transparent;
         }
 
         .word.accent {
           color: #4fc3f7;
-          text-shadow: 0 0 30px rgba(79,195,247,0.5);
+          text-shadow: 0 0 40px rgba(79,195,247,0.6);
         }
 
         .sep {
           display: inline-block;
-          width: 5px;
-          height: 5px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
-          background: rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.25);
           flex-shrink: 0;
           vertical-align: middle;
         }
 
         .sep.bright {
           background: #4fc3f7;
-          box-shadow: 0 0 6px #4fc3f7;
+          box-shadow: 0 0 8px #4fc3f7;
         }
 
         .divider {
@@ -211,10 +216,10 @@ export default function MarqueeSection() {
           background: linear-gradient(
             to right,
             transparent,
-            rgba(255,255,255,0.08),
+            rgba(255,255,255,0.1),
             transparent
           );
-          margin: 12px 0;
+          margin: 20px 0;
         }
       `}</style>
 
