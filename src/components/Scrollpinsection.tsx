@@ -10,6 +10,9 @@ const items = [
     title: "Data backing every creative decision.",
     description:
       "We don't just make things look good; we make them perform. Our agency bridges the gap between high-end design and hard-hitting performance marketing.",
+    tag: "Analytics",
+    accent: "rgba(99,179,237,0.18)",
+    accentLine: "linear-gradient(90deg, #63b3ed, #9f7aea)",
     bullets: [
       {
         title: "Transparent Reporting",
@@ -29,6 +32,9 @@ const items = [
     title: "Strategy that scales with you.",
     description:
       "Whether you're a startup or an enterprise, our strategies are built to evolve with your business and deliver compounding returns over time.",
+    tag: "Strategy",
+    accent: "rgba(154,230,180,0.15)",
+    accentLine: "linear-gradient(90deg, #9ae6b4, #63b3ed)",
     bullets: [
       {
         title: "Scalable Systems",
@@ -45,6 +51,9 @@ const items = [
     title: "Creative that converts.",
     description:
       "Stunning visuals paired with persuasive copy — we craft brand stories that turn prospects into loyal customers.",
+    tag: "Creative",
+    accent: "rgba(252,176,176,0.13)",
+    accentLine: "linear-gradient(90deg, #fc90b0, #f6ad55)",
     bullets: [
       {
         title: "Brand Identity",
@@ -61,6 +70,9 @@ const items = [
     title: "Results you can measure.",
     description:
       "Every campaign we run is tracked, tested, and optimised. We obsess over the numbers so you can focus on growing your business.",
+    tag: "Performance",
+    accent: "rgba(246,173,85,0.14)",
+    accentLine: "linear-gradient(90deg, #f6ad55, #fc90b0)",
     bullets: [
       {
         title: "A/B Testing",
@@ -78,40 +90,43 @@ const items = [
   },
 ];
 
-// Static left panel content — fixed, never changes
-const LEFT_STATIC = {
-  title: "Why we're different.",
-  description:
-    "We don't just make things look good; we make them perform. Our agency bridges the gap between high-end design and hard-hitting performance marketing.",
-  bullets: [
-    {
-      title: "Transparent Reporting",
-      desc: "Live dashboards so you always know your ROI.",
-    },
-    {
-      title: "Conversion-Focused Approach",
-      desc: "Every pixel is placed with conversion in mind.",
-    },
-    {
-      title: "Dedicated Growth Team",
-      desc: "Direct access to experts, no account manager buffers.",
-    },
-  ],
-};
+const LEFT_BULLETS = [
+  {
+    title: "Transparent Reporting",
+    desc: "Live dashboards so you always know your ROI.",
+  },
+  {
+    title: "Conversion-Focused Approach",
+    desc: "Every pixel is placed with conversion in mind.",
+  },
+  {
+    title: "Dedicated Growth Team",
+    desc: "Direct access to experts, no account manager buffers.",
+  },
+];
+
+const STATS = [
+  { value: "40+", label: "Brands" },
+  { value: "3×", label: "Avg. ROI" },
+  { value: "12", label: "Industries" },
+];
 
 export default function ScrollPinSection() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const slidesRef = useRef<(HTMLDivElement | null)[]>([]);
-  const accentLineRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const bigNumRef = useRef<HTMLDivElement>(null);
 
-  const levelTrackRef = useRef<HTMLDivElement>(null);
   const levelFillRef = useRef<HTMLDivElement>(null);
   const levelGlowRef = useRef<HTMLDivElement>(null);
+  const levelTickRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  const currentRef = useRef(0);
+  const animatingRef = useRef(false);
+  const entryGraceRef = useRef(false);
 
-  /* ─── Lenis smooth scroll ─── */
+  /* ─── Lenis ─── */
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.1,
@@ -119,14 +134,11 @@ export default function ScrollPinSection() {
       smoothWheel: true,
       wheelMultiplier: 1,
     });
-
     const onScroll = () => ScrollTrigger.update();
     lenis.on("scroll", onScroll);
-
     const tick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
-
     return () => {
       lenis.off("scroll", onScroll);
       gsap.ticker.remove(tick);
@@ -134,465 +146,561 @@ export default function ScrollPinSection() {
     };
   }, []);
 
-  /* ─── animate level bar ─── */
-  const animateLevelBar = useCallback((progress: number) => {
+  /* ─── Level bar + big number ─── */
+  const animateLevelBar = useCallback((progress: number, nextIdx: number) => {
     if (!levelFillRef.current || !levelGlowRef.current) return;
     const pct = `${progress * 100}%`;
-
     gsap.to(levelFillRef.current, {
       height: pct,
-      duration: 0.6,
+      duration: 0.55,
       ease: "power3.out",
     });
     gsap.to(levelGlowRef.current, {
       top: pct,
-      opacity: 1,
-      duration: 0.6,
+      duration: 0.55,
       ease: "power3.out",
     });
-
     gsap.fromTo(
       levelGlowRef.current,
-      { opacity: 1, scale: 1.5 },
-      { opacity: 0.6, scale: 1, duration: 0.7, ease: "power3.out" },
+      { scale: 1.8, opacity: 1 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" },
     );
+
+    // Highlight active tick
+    levelTickRefs.current.forEach((t, i) => {
+      if (!t) return;
+      gsap.to(t, { opacity: i === nextIdx ? 1 : 0.25, duration: 0.3 });
+    });
+
+    // Big background number
+    if (bigNumRef.current) {
+      gsap.to(bigNumRef.current, {
+        opacity: 0,
+        y: -20,
+        duration: 0.2,
+        ease: "power2.in",
+        onComplete: () => {
+          if (bigNumRef.current) {
+            bigNumRef.current.textContent = `0${nextIdx + 1}`;
+            gsap.fromTo(
+              bigNumRef.current,
+              { opacity: 0, y: 20 },
+              { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" },
+            );
+          }
+        },
+      });
+    }
   }, []);
 
-  // goTo only animates RIGHT cards — left panel is untouched
+  /* ─── goTo ─── */
   const goTo = useCallback(
     (idx: number) => {
-      if (animating) return;
+      if (animatingRef.current) return;
       const next = ((idx % items.length) + items.length) % items.length;
-      if (next === current) return;
-
-      setAnimating(true);
+      if (next === currentRef.current) return;
+      animatingRef.current = true;
+      const prev = currentRef.current;
       const slides = slidesRef.current.filter(Boolean) as HTMLDivElement[];
+
       const tl = gsap.timeline({
         onComplete: () => {
+          currentRef.current = next;
           setCurrent(next);
-          setAnimating(false);
+          setTimeout(() => {
+            animatingRef.current = false;
+          }, 120);
         },
       });
 
-      // Only animate RIGHT cards — no left panel animation at all
-      tl.to(slides[current], {
+      tl.to(slides[prev], {
         opacity: 0,
-        y: -14,
-        duration: 0.4,
+        y: -24,
+        duration: 0.35,
         ease: "power2.inOut",
       });
-
-      tl.add(() => {
-        animateLevelBar((next + 1) / items.length);
-      });
-
+      tl.add(() => animateLevelBar((next + 1) / items.length, next));
       tl.fromTo(
         slides[next],
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
-        "<",
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.48, ease: "power3.out" },
+        "<0.05",
       );
-
-      if (accentLineRefs.current[next]) {
-        tl.fromTo(
-          accentLineRefs.current[next],
-          { width: 0 },
-          { width: 60, duration: 0.5, ease: "power3.out" },
-          "<0.1",
-        );
-      }
     },
-    [current, animating, animateLevelBar],
+    [animateLevelBar],
   );
 
-  /* ─── GSAP ScrollTrigger pin ─── */
+  /* ─── ScrollTrigger pin ─── */
   useEffect(() => {
     const ctx = gsap.context(() => {
       const slides = slidesRef.current.filter(Boolean) as HTMLDivElement[];
       if (!slides.length) return;
-
-      slides.forEach((s) => {
-        s.style.willChange = "opacity, transform";
-      });
-
       gsap.set(slides[0], { opacity: 1, y: 0 });
-      slides.slice(1).forEach((s) => gsap.set(s, { opacity: 0, y: 18 }));
-
-      if (accentLineRefs.current[0]) {
-        gsap.set(accentLineRefs.current[0], { width: 60 });
-      }
-
-      if (levelFillRef.current) {
+      slides.slice(1).forEach((s) => gsap.set(s, { opacity: 0, y: 28 }));
+      if (levelFillRef.current)
         gsap.set(levelFillRef.current, {
           height: `${(1 / items.length) * 100}%`,
         });
-      }
 
-      let lastIdx = 0;
+      // Init tick highlights
+      levelTickRefs.current.forEach((t, i) => {
+        if (!t) return;
+        gsap.set(t, { opacity: i === 0 ? 1 : 0.25 });
+      });
 
-      // Only right-card slides animate — left panel is NOT touched here
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: ".pin-section",
-          start: "top top",
-          end: "+=" + items.length * 100 + "%",
-          pin: true,
-          scrub: 0.6,
-          onUpdate: (self) => {
-            const idx = Math.min(
-              Math.floor(self.progress * items.length),
-              items.length - 1,
-            );
-            if (idx !== lastIdx) {
-              lastIdx = idx;
-              setCurrent(idx); // only drives dots + level bar
-              animateLevelBar((idx + 1) / items.length);
-            }
-          },
+      ScrollTrigger.create({
+        trigger: ".pin-section",
+        start: "top top",
+        end: `+=${items.length * 100}%`,
+        pin: true,
+        anticipatePin: 1,
+        onEnter: () => {
+          entryGraceRef.current = true;
+          setTimeout(() => {
+            entryGraceRef.current = false;
+          }, 800);
+        },
+        onEnterBack: () => {
+          entryGraceRef.current = true;
+          setTimeout(() => {
+            entryGraceRef.current = false;
+          }, 800);
         },
       });
-
-      slides.forEach((slide, i) => {
-        if (i === 0) return;
-        tl.to(slides[i - 1], {
-          opacity: 0,
-          y: -14,
-          duration: 0.35,
-          ease: "power2.inOut",
-        }).to(
-          slide,
-          { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
-          "<0.05",
-        );
-      });
     }, containerRef);
-
     return () => ctx.revert();
   }, []);
 
-  /* ─── Keyboard nav ─── */
+  /* ─── Wheel snap ─── */
+  useEffect(() => {
+    let cooldown = false;
+    const onWheel = (e: WheelEvent) => {
+      const section = sectionRef.current;
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      if (!(rect.top <= 1 && rect.bottom >= window.innerHeight - 1)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (entryGraceRef.current || cooldown || animatingRef.current) return;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const next = currentRef.current + dir;
+      if (next < 0 || next >= items.length) {
+        cooldown = true;
+        setTimeout(() => {
+          cooldown = false;
+        }, 700);
+        return;
+      }
+      cooldown = true;
+      setTimeout(() => {
+        cooldown = false;
+      }, 650);
+      goTo(next);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [goTo]);
+
+  /* ─── Keyboard ─── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") goTo(current + 1);
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") goTo(current - 1);
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        const n = currentRef.current + 1;
+        if (n < items.length) goTo(n);
+      }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        const n = currentRef.current - 1;
+        if (n >= 0) goTo(n);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [current, goTo]);
+  }, [goTo]);
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
-        .level-track {
-          position: absolute;
-          left: 50%;
-          top: 5%;
-          bottom: 5%;
+        .sp-wrap { font-family: 'Inter', sans-serif; }
+
+        /* ── NOISE OVERLAY ── */
+        .sp-noise {
+          position: absolute; inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+          pointer-events: none; z-index: 1; opacity: 0.4;
+        }
+
+        /* ── LEVEL BAR ── */
+        .sp-track {
+          position: absolute; left: 50%;
+          top: 14%; bottom: 8%;
           transform: translateX(-50%);
-          width: 2px;
-          background: rgba(255,255,255,0.07);
-          border-radius: 2px;
-          overflow: visible;
-          display: none;
+          width: 1px;
+          background: rgba(255,255,255,0.06);
+          display: none; z-index: 10;
         }
-        @media (min-width: 1024px) {
-          .level-track { display: block; }
-        }
+        @media (min-width: 1024px) { .sp-track { display: block; } }
 
-        .level-fill {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          background: linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(255,255,255,0.15));
-          border-radius: 2px;
+        .sp-fill {
+          position: absolute; top: 0; left: 0; width: 100%;
+          background: linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.15));
+          border-radius: 1px;
         }
-
-        .level-glow {
-          position: absolute;
-          left: 50%;
+        .sp-glow {
+          position: absolute; left: 50%;
           transform: translateX(-50%) translateY(-50%);
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
+          width: 8px; height: 8px; border-radius: 50%;
           background: #fff;
-          box-shadow: 0 0 10px 3px rgba(255,255,255,0.55),
-                      0 0 22px 6px rgba(255,255,255,0.2);
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.12), 0 0 16px 4px rgba(255,255,255,0.4), 0 0 32px 10px rgba(255,255,255,0.1);
         }
-
-        .level-tick {
-          position: absolute;
-          left: 50%;
+        .sp-tick {
+          position: absolute; left: 50%;
           transform: translateX(-50%);
-          width: 6px;
-          height: 1px;
-          background: rgba(255,255,255,0.18);
+          width: 4px; height: 1px;
+          background: rgba(255,255,255,0.35);
+          transition: all 0.3s;
+        }
+        .sp-tick-label {
+          position: absolute; right: 9px;
+          font-size: 8px; font-weight: 600;
+          letter-spacing: 0.14em; text-transform: uppercase;
+          color: rgba(255,255,255,0.35);
+          transform: translateY(50%); white-space: nowrap;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s;
+          text-align: right;
         }
 
-        .level-label {
-          position: absolute;
-          left: 12px;
-          font-size: 9px;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.25);
-          transform: translateY(50%);
-          white-space: nowrap;
-        }
-
-        .right-card {
-          padding: 2.5rem 2.5rem 2rem;
+        /* ── LEFT ── */
+        .sp-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 5px 14px 5px 8px;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 100px;
+          font-size: 9px; font-weight: 600;
+          letter-spacing: 0.18em; text-transform: uppercase;
+          color: rgba(255,255,255,0.45);
+          width: fit-content;
           background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 4px;
         }
+        .sp-left-h {
+          font-size: clamp(2.4rem, 3.6vw, 4rem);
+          font-weight: 800; line-height: 1.02;
+          letter-spacing: -0.03em; color: #fff; margin: 0;
+        }
+        .sp-left-desc {
+          font-size: 14px; line-height: 1.85;
+          color: rgba(255,255,255,0.38);
+          font-weight: 300; margin: 0;
+        }
+        .sp-stat-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 1px;
+          border: 1px solid rgba(255,255,255,0.07);
+          
+          background: rgba(255,255,255,0.07);
+        }
+        .sp-stat-cell {
+          background: rgba(255,255,255,0.02);
+          padding: 14px 16px;
+          display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+        }
+        .sp-stat-val { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.03em; }
+        .sp-stat-lbl { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; }
+
+        .sp-bullet-row {
+          display: flex; align-items: flex-start; gap: 14px;
+          padding: 14px 0;
+        }
+        .sp-bullet-row + .sp-bullet-row { border-top: 1px solid rgba(255,255,255,0.05); }
+        .sp-bullet-idx {
+          flex-shrink: 0; width: 22px; height: 22px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 8px; font-weight: 700;
+          color: rgba(255,255,255,0.3); letter-spacing: 0.05em;
+          margin-top: 1px;
+        }
+
+        /* ── RIGHT CARD ── */
+        .sp-card {
+          position: absolute; inset: 0;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(12,12,12,0.8);
+          backdrop-filter: blur(16px);
+          display: flex; flex-direction: column; justify-content: space-between;
+          overflow: hidden;
+        }
+        .sp-card-accent-bar {
+          position: absolute; top: 0; left: 0; right: 0;
+          height: 1px;
+        }
+        .sp-card-glow {
+          position: absolute; top: -80px; right: -80px;
+          width: 280px; height: 280px; border-radius: 50%;
+          pointer-events: none; opacity: 0.35;
+          filter: blur(60px);
+        }
+        .sp-card-inner { padding: 2.4rem 2.6rem; position: relative; z-index: 1; }
+        .sp-card-footer { padding: 0 2.6rem 2.4rem; position: relative; z-index: 1; }
+
+        .sp-card-hd {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 1.5rem;
+        }
+        .sp-card-num-badge {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-size: 10px; font-weight: 700;
+          letter-spacing: 0.16em; color: rgba(255,255,255,0.25);
+          text-transform: uppercase;
+        }
+        .sp-card-num-badge::before {
+          content: ''; width: 20px; height: 1px;
+          background: rgba(255,255,255,0.18); display: block;
+        }
+        .sp-card-tag-pill {
+          padding: 4px 11px;
+          border-radius: 100px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.04);
+          font-size: 9px; font-weight: 600;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+        }
+        .sp-card-title {
+          font-size: clamp(1.45rem, 2.2vw, 2.2rem);
+          font-weight: 700; line-height: 1.2;
+          color: #fff; margin: 0 0 0.9rem;
+          letter-spacing: -0.025em;
+        }
+        .sp-card-desc {
+          font-size: 13.5px; line-height: 1.85;
+          color: rgba(255,255,255,0.4); margin: 0; font-weight: 300;
+        }
+        .sp-card-divider {
+          height: 1px; background: rgba(255,255,255,0.06);
+          margin: 0 2.6rem;
+        }
+        .sp-b-row {
+          display: flex; align-items: flex-start; gap: 12px;
+          padding: 13px 0;
+        }
+        .sp-b-row + .sp-b-row { border-top: 1px solid rgba(255,255,255,0.05); }
+        .sp-b-dot {
+          width: 5px; height: 5px; border-radius: 50%;
+          background: rgba(255,255,255,0.45); flex-shrink: 0; margin-top: 7px;
+        }
+        .sp-b-title { font-size: 13px; font-weight: 600; color: #fff; }
+        .sp-b-desc { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.38); line-height: 1.65; margin: 3px 0 0; }
+
+        /* ── DOTS ── */
+        .sp-seg {
+          height: 2px; border-radius: 2px; border: none; padding: 0; cursor: pointer;
+          background: rgba(255,255,255,0.1);
+          transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+        }
+        .sp-seg.active { background: #fff; }
       `}</style>
 
-      <div
-        ref={containerRef}
-        style={{ fontFamily: "'DM Sans', sans-serif" }}
-        className="bg-black"
-      >
-        <section className="pin-section relative w-full h-screen bg-black flex flex-col justify-center overflow-hidden">
+      <div ref={containerRef} className="bg-black sp-wrap">
+        <section
+          ref={sectionRef}
+          className="pin-section relative w-full h-screen bg-black flex flex-col justify-center overflow-hidden"
+        >
+          {/* Noise */}
+          <div className="sp-noise" />
+
           {/* ── LEVEL BAR ── */}
-          <div className="level-track" ref={levelTrackRef}>
+          <div className="sp-track">
             {items.map((_, i) => {
-              const topPct = `${(i / (items.length - 1)) * 100}%`;
+              const topPct = `${((i + 1) / items.length) * 100}%`;
               return (
-                <div key={i} className="level-tick" style={{ top: topPct }}>
-                  <span className="level-label">0{i + 1}</span>
+                <div
+                  key={i}
+                  className="sp-tick"
+                  ref={(el) => {
+                    levelTickRefs.current[i] = el;
+                  }}
+                  style={{ top: topPct }}
+                >
+                  <span className="sp-tick-label">0{i + 1}</span>
                 </div>
               );
             })}
-            <div className="level-fill" ref={levelFillRef} />
+            <div className="sp-fill" ref={levelFillRef} />
             <div
-              className="level-glow"
+              className="sp-glow"
               ref={levelGlowRef}
               style={{ top: `${(1 / items.length) * 100}%` }}
             />
           </div>
 
-          {/* ── MAIN LAYOUT ── */}
+          {/* ── LAYOUT ── */}
           <div
-            className="w-full mx-auto flex items-start"
-            style={{
-              maxWidth: "1280px",
-              padding: "0 3rem",
-              gap: "5rem",
-            }}
+            className="relative z-10 w-full mx-auto flex items-center"
+            style={{ maxWidth: "1340px", padding: "0 4.5rem", gap: "6rem" }}
           >
-            {/* ── LEFT PANEL — static, never changes ── */}
+            {/* ════ LEFT — static ════ */}
             <div
-              className="hidden md:flex flex-col space-y-8"
-              style={{ flex: "0 0 45%", minWidth: 0, paddingTop: "2.5rem" }}
+              className="hidden md:flex flex-col"
+              style={{
+                flex: "0 0 43%",
+                minWidth: 0,
+                gap: "1.8rem",
+                position: "relative",
+              }}
             >
-              <span
+              {/* Giant faded background number */}
+              <div
+                ref={bigNumRef}
                 style={{
-                  display: "inline-block",
-                  padding: "5px 12px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  fontSize: "10px",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.38)",
-                  borderRadius: "2px",
-                  width: "fit-content",
+                  position: "absolute",
+                  right: "-20px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: "clamp(12rem, 16vw, 18rem)",
+                  fontWeight: 800,
+                  color: "rgba(255,255,255,0.025)",
+                  letterSpacing: "-0.06em",
+                  lineHeight: 1,
+                  userSelect: "none",
+                  pointerEvents: "none",
+                  zIndex: 0,
                 }}
               >
-                Why we&apos;re different
-              </span>
-
-              <h1
-                style={{
-                  fontSize: "clamp(2rem, 3.2vw, 3.6rem)",
-                  fontWeight: 700,
-                  lineHeight: 1.1,
-                  color: "#fff",
-                  margin: 0,
-                }}
-              >
-                {LEFT_STATIC.title}
-              </h1>
-
-              <p
-                style={{
-                  fontSize: "clamp(0.95rem, 1.1vw, 1.15rem)",
-                  lineHeight: 1.85,
-                  color: "rgba(255,255,255,0.55)",
-                  margin: 0,
-                }}
-              >
-                {LEFT_STATIC.description}
-              </p>
+                01
+              </div>
 
               <div
                 style={{
+                  position: "relative",
+                  zIndex: 1,
                   display: "flex",
                   flexDirection: "column",
-                  gap: "1.5rem",
+                  gap: "1.8rem",
                 }}
               >
-                {LEFT_STATIC.bullets.map((b, i) => (
-                  <div
-                    key={i}
+                {/* Eyebrow */}
+                <span className="sp-eyebrow">
+                  <span
                     style={{
-                      display: "flex",
-                      gap: "1rem",
-                      alignItems: "flex-start",
+                      width: 6,
+                      height: 6,
+
+                      background: "rgba(255,255,255,0.4)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  Why we&apos;re different
+                </span>
+
+                {/* Heading */}
+                <h2 className="sp-left-h">
+                  Why we&apos;re
+                  <br />
+                  <span
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(120deg, #fff 0%, rgba(255,255,255,0.38) 100%)",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
                     }}
                   >
-                    <div
-                      style={{
-                        flexShrink: 0,
-                        width: "22px",
-                        height: "22px",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "9px",
-                        color: "rgba(255,255,255,0.38)",
-                        borderRadius: "2px",
-                        marginTop: "2px",
-                      }}
-                    >
-                      0{i + 1}
+                    different.
+                  </span>
+                </h2>
+
+                {/* Description */}
+                <p className="sp-left-desc">
+                  We don't just make things look good; we make them perform.
+                  Bridging the gap between high-end design and hard-hitting
+                  performance marketing.
+                </p>
+
+                {/* Stats */}
+                <div className="sp-stat-grid">
+                  {STATS.map((s) => (
+                    <div key={s.label} className="sp-stat-cell">
+                      <span className="sp-stat-val">{s.value}</span>
+                      <span className="sp-stat-lbl">{s.label}</span>
                     </div>
-                    <div>
-                      <h4
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 500,
-                          color: "#fff",
-                          margin: "0 0 3px",
-                        }}
-                      >
-                        {b.title}
-                      </h4>
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "rgba(255,255,255,0.42)",
-                          lineHeight: 1.65,
-                          margin: 0,
-                        }}
-                      >
-                        {b.desc}
-                      </p>
+                  ))}
+                </div>
+
+                {/* Bullets */}
+                <div>
+                  {LEFT_BULLETS.map((b, i) => (
+                    <div key={i} className="sp-bullet-row">
+                      <div className="sp-bullet-idx">0{i + 1}</div>
+                      <div>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#fff",
+                            margin: "0 0 3px",
+                          }}
+                        >
+                          {b.title}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            color: "rgba(255,255,255,0.35)",
+                            lineHeight: 1.65,
+                            margin: 0,
+                            fontWeight: 300,
+                          }}
+                        >
+                          {b.desc}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* ── RIGHT CARDS — 50% — animates on scroll ── */}
+            {/* ════ RIGHT CARDS ════ */}
             <div style={{ flex: "0 0 50%", minWidth: 0 }}>
-              <div style={{ position: "relative", height: "580px" }}>
+              <div style={{ position: "relative", height: "510px" }}>
                 {items.map((itm, i) => (
                   <div
                     key={i}
                     ref={(el) => {
                       slidesRef.current[i] = el;
                     }}
-                    className="right-card"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                    }}
+                    className="sp-card"
                   >
-                    {/* Card top */}
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          letterSpacing: "0.16em",
-                          textTransform: "uppercase",
-                          color: "rgba(255,255,255,0.3)",
-                          marginBottom: "1.5rem",
-                        }}
-                      >
-                        0{i + 1}
+                    {/* Ambient glow */}
+                    <div
+                      className="sp-card-glow"
+                      style={{ background: itm.accent }}
+                    />
+
+                    {/* Top content */}
+                    <div className="sp-card-inner">
+                      <div className="sp-card-hd">
+                        <span className="sp-card-num-badge">0{i + 1}</span>
+                        <span className="sp-card-tag-pill">{itm.tag}</span>
                       </div>
-
-                      <h2
-                        style={{
-                          fontSize: "clamp(1.5rem, 2.2vw, 2.4rem)",
-                          fontWeight: 700,
-                          lineHeight: 1.2,
-                          color: "#fff",
-                          marginBottom: "1.25rem",
-                        }}
-                      >
-                        {itm.title}
-                      </h2>
-
-                      <p
-                        style={{
-                          fontSize: "clamp(0.9rem, 1vw, 1.05rem)",
-                          lineHeight: 1.9,
-                          color: "rgba(255,255,255,0.48)",
-                          margin: 0,
-                        }}
-                      >
-                        {itm.description}
-                      </p>
+                      <h3 className="sp-card-title">{itm.title}</h3>
+                      <p className="sp-card-desc">{itm.description}</p>
                     </div>
 
+                    <div className="sp-card-divider" />
+
                     {/* Bullets */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "1rem",
-                        marginTop: "2rem",
-                      }}
-                    >
+                    <div className="sp-card-footer">
                       {itm.bullets.map((b, j) => (
-                        <div
-                          key={j}
-                          style={{
-                            display: "flex",
-                            gap: "1rem",
-                            alignItems: "flex-start",
-                            paddingTop: "1.1rem",
-                            borderTop: "1px solid rgba(255,255,255,0.07)",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "6px",
-                              height: "6px",
-                              borderRadius: "50%",
-                              background: "#fff",
-                              flexShrink: 0,
-                              marginTop: "6px",
-                            }}
-                          />
+                        <div key={j} className="sp-b-row">
+                          <div className="sp-b-dot" />
                           <div>
-                            <span
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: 500,
-                                color: "#fff",
-                              }}
-                            >
-                              {b.title}
-                            </span>
-                            <p
-                              style={{
-                                fontSize: "13px",
-                                color: "rgba(255,255,255,0.42)",
-                                lineHeight: 1.7,
-                                margin: "3px 0 0",
-                              }}
-                            >
-                              {b.desc}
-                            </p>
+                            <p className="sp-b-title">{b.title}</p>
+                            <p className="sp-b-desc">{b.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -601,35 +709,37 @@ export default function ScrollPinSection() {
                 ))}
               </div>
 
-              {/* ── DOTS ── */}
+              {/* Progress bar + counter */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  marginTop: "2rem",
+                  gap: "10px",
+                  marginTop: "1.5rem",
                 }}
               >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                {items.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`sp-seg${i === current ? " active" : ""}`}
+                    style={{ width: i === current ? "36px" : "14px" }}
+                    onClick={() => goTo(i)}
+                  />
+                ))}
+                <span
+                  style={{
+                    marginLeft: "8px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.22)",
+                    letterSpacing: "0.08em",
+                    fontFamily: "Inter, sans-serif",
+                  }}
                 >
-                  {items.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => goTo(i)}
-                      style={{
-                        height: "2px",
-                        width: i === current ? "36px" : "16px",
-                        background:
-                          i === current ? "#fff" : "rgba(255,255,255,0.15)",
-                        borderRadius: "1px",
-                        border: "none",
-                        cursor: "pointer",
-                        transition: "all 0.35s ease",
-                        padding: 0,
-                      }}
-                    />
-                  ))}
-                </div>
+                  {String(current + 1).padStart(2, "0")}{" "}
+                  <span style={{ color: "rgba(255,255,255,0.1)" }}>/</span>{" "}
+                  {String(items.length).padStart(2, "0")}
+                </span>
               </div>
             </div>
           </div>

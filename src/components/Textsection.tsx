@@ -1,16 +1,19 @@
-import React from "react";
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 type WordStyle = "solid" | "outlined" | "accent";
 
 const words1 = [
-  "Growth",
-  "Scale",
-  "Momentum",
-  "Acceleration",
-  "Amplify",
-  "Expand",
+  "GROWTH",
+  "SCALE",
+  "MOMENTUM",
+  "ACCELERATION",
+  "AMPLIFY",
+  "EXPAND",
 ];
-
 const words2 = [
   "ELEVATE",
   "DISRUPT",
@@ -28,210 +31,166 @@ const wordStyles1: WordStyle[] = [
   "outlined",
   "solid",
 ];
-
 const wordStyles2: WordStyle[] = [
-  "solid",
   "outlined",
   "solid",
   "outlined",
   "solid",
   "outlined",
+  "solid",
 ];
 
-function Row1Item({ word, style }: { word: string; style: WordStyle }) {
-  const isBright = style === "accent" || style === "solid";
+// We duplicate 4 times for seamless infinite scroll on ultra-wide monitors
+const track1 = [...words1, ...words1, ...words1, ...words1];
+const track2 = [...words2, ...words2, ...words2, ...words2];
 
+function MarqueeItem({
+  word,
+  style,
+  sm,
+}: {
+  word: string;
+  style: WordStyle;
+  sm?: boolean;
+}) {
   return (
-    <>
+    <div className="flex items-center gap-6 md:gap-12 mx-3 md:mx-6">
       <span
-        className={`word ${
-          style === "outlined" ? "outlined" : style === "accent" ? "accent" : ""
-        }`}
+        className={`word whitespace-nowrap ${sm ? "sm" : ""} ${style}`}
+        style={{
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontSize: sm
+            ? "clamp(3.5rem, 6vw, 5rem)"
+            : "clamp(4.8rem, 9vw, 7.5rem)",
+          lineHeight: 1,
+          letterSpacing: "0.04em",
+          color:
+            style === "outlined"
+              ? "transparent"
+              : style === "accent"
+                ? "#4DF0A0" // Mint green accent matching Hero
+                : "rgba(255,255,255,0.9)",
+          WebkitTextStroke:
+            style === "outlined" ? "1.5px rgba(255,255,255,0.25)" : "none",
+          textShadow:
+            style === "accent" ? "0 0 45px rgba(77, 240, 160, 0.45)" : "none",
+        }}
       >
         {word}
       </span>
-      <span className={`sep ${isBright ? "bright" : ""}`} />
-    </>
+      <span
+        className="w-2 h-2 md:w-3 md:h-3 rounded-full flex-shrink-0"
+        style={{
+          background: style === "accent" ? "#4DF0A0" : "rgba(255,255,255,0.15)",
+          boxShadow: style === "accent" ? "0 0 15px #4DF0A0" : "none",
+        }}
+      />
+    </div>
   );
 }
 
-function Row2Item({ word, style }: { word: string; style: WordStyle }) {
-  const isBright = style === "outlined";
+export default function TextSection() {
+  const row1Ref = useRef<HTMLDivElement>(null);
+  const row2Ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // We use GSAP for flawlessly smooth looping that syncs optimally with Lenis.
+    const ctx = gsap.context(() => {
+      // Create infinite looping tweens
+      const t1 = gsap.to(row1Ref.current, {
+        xPercent: -50,
+        ease: "none",
+        duration: 35,
+        repeat: -1,
+      });
+
+      const t2 = gsap.fromTo(
+        row2Ref.current,
+        { xPercent: -50 },
+        { xPercent: 0, ease: "none", duration: 40, repeat: -1 },
+      );
+
+      // Advanced trick: tie timescale to scroll velocity!
+      // This means when you scroll down or up, the marquee dynamically speeds up smoothly.
+      ScrollTrigger.create({
+        trigger: document.body,
+        start: "top top",
+        end: "bottom bottom",
+        onUpdate: (self) => {
+          // Normalize velocity so it's a pleasant boost factor
+          const velocity = Math.abs(self.getVelocity() / 600);
+          const timeScale = 1 + velocity;
+
+          gsap.to([t1, t2], {
+            timeScale: timeScale,
+            duration: 0.3,
+            ease: "power2.out",
+            overwrite: true,
+          });
+        },
+      });
+    });
+
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <>
-      <span className={`word sm ${style === "outlined" ? "outlined" : ""}`}>
-        {word}
-      </span>
-      <span className={`sep ${isBright ? "bright" : ""}`} />
-    </>
-  );
-}
+    <section className="relative w-full bg-black py-28 overflow-hidden flex flex-col items-center justify-center min-h-[50vh]">
+      {/* ── BACKGROUND AMBIENT GLOW ── */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 60%)",
+        }}
+      />
 
-export default function MarqueeSection() {
-  return (
-    <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500&display=swap');
 
-        .marquee-section {
-          background: #000;
-          width: 100%;
-          padding: 60px 0; /* 👈 more breathing space */
-          overflow: hidden;
-          position: relative;
-        }
-
-        /* ✅ TOP FADE (stronger & smoother) */
-        .marquee-section::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 120px;
-          background: linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.8) 40%, transparent 100%);
-          z-index: 3;
-          pointer-events: none;
-        }
-
-        /* ✅ BOTTOM FADE (enhanced, smoother) */
-        .marquee-section::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 120px;
-          background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 60%, #000 100%);
-          z-index: 3;
-          pointer-events: none;
-        }
-
-        .marquee-label {
-          text-align: center;
-          font-size: 12px;
-          letter-spacing: 0.4em;
-          color: rgba(255,255,255,0.4);
-          text-transform: uppercase;
-          margin-bottom: 30px;
-        }
-
-        .marquee-track-wrap {
-          overflow: hidden;
-          position: relative;
-        }
-
-        .marquee-track-wrap::before,
-        .marquee-track-wrap::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 120px;
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .marquee-track-wrap::before {
-          left: 0;
-          background: linear-gradient(to right, #000, transparent);
-        }
-
-        .marquee-track-wrap::after {
-          right: 0;
-          background: linear-gradient(to left, #000, transparent);
-        }
-
-        .marquee-track {
-          display: flex;
-          align-items: center;
-          white-space: nowrap;
-          animation: scroll-left 22s linear infinite;
-        }
-
-        .marquee-track.reverse {
-          animation: scroll-right 26s linear infinite;
-        }
-
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-
-        @keyframes scroll-right {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
-
-        /* ✅ BIGGER TEXT */
         .word {
-          font-family: 'Bebas Neue', sans-serif;
-          font-size: 90px; /* 👈 increased */
-          letter-spacing: 0.05em;
-          padding: 0 28px;
-          display: inline-block;
-          color: rgba(255,255,255,0.9);
-          line-height: 1;
+          /* Notice how we only transition transform and colors visually in CSS, 
+             leaving the horizontal sliding completely untouched for GSAP to handle natively! */
+          transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), 
+                      color 0.5s cubic-bezier(0.22, 1, 0.36, 1), 
+                      text-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+          cursor: default;
+          will-change: transform, color, text-shadow;
         }
-
-        .word.sm {
-          font-size: 60px; /* 👈 increased */
-          color: rgba(255,255,255,0.4);
-        }
-
-        .word.outlined {
-          -webkit-text-stroke: 2px rgba(255,255,255,0.25);
-          color: transparent;
-        }
-
-        .word.sm.outlined {
-          -webkit-text-stroke: 1.5px rgba(255,255,255,0.2);
-          color: transparent;
-        }
-
-        .word.accent {
-          color: #4fc3f7;
-          text-shadow: 0 0 40px rgba(79,195,247,0.6);
-        }
-
-        .sep {
-          display: inline-block;
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.25);
-          flex-shrink: 0;
-          vertical-align: middle;
-        }
-
-        .sep.bright {
-          background: #4fc3f7;
-          box-shadow: 0 0 8px #4fc3f7;
-        }
-
-        .divider {
-          width: 100%;
-          height: 1px;
-          background: linear-gradient(
-            to right,
-            transparent,
-            rgba(255,255,255,0.1),
-            transparent
-          );
-          margin: 20px 0;
+        
+        .word:hover {
+          color: #fff !important;
+          -webkit-text-stroke: 0px transparent !important;
+          text-shadow: 0 0 35px rgba(255,255,255,0.6) !important;
+          transform: scale(1.08) rotate(-1.5deg);
         }
       `}</style>
 
-      <section className="marquee-section">
-        <p className="marquee-label">Powering results</p>
+      {/* ── LABEL ── */}
+      <div className="relative z-10 text-center mb-16 px-4">
+        <p
+          style={{
+            fontSize: "12px",
+            letterSpacing: "0.45em",
+            color: "rgba(255,255,255,0.45)",
+            textTransform: "uppercase",
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 500,
+          }}
+        >
+          Powering Results
+        </p>
+        <div className="mt-5 w-[1px] h-12 bg-gradient-to-b from-white/30 to-transparent mx-auto" />
+      </div>
 
-        {/* Row 1 */}
-        <div className="marquee-track-wrap">
-          <div className="marquee-track">
-            {[...words1, ...words1].map((word, i) => (
-              <Row1Item
-                key={i}
+      {/* ── HORIZONTAL MARQUEE CONTAINER ── */}
+      <div className="relative z-10 w-full flex flex-col items-center justify-center">
+        {/* ROW 1 */}
+        <div className="flex whitespace-nowrap mb-5 md:mb-7 max-w-full">
+          <div className="flex w-max" ref={row1Ref}>
+            {track1.map((word, i) => (
+              <MarqueeItem
+                key={`r1-${i}`}
                 word={word}
                 style={wordStyles1[i % words1.length]}
               />
@@ -239,21 +198,30 @@ export default function MarqueeSection() {
           </div>
         </div>
 
-        <div className="divider" />
+        {/* THIN DIVIDER */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-5 md:mb-7" />
 
-        {/* Row 2 */}
-        <div className="marquee-track-wrap">
-          <div className="marquee-track reverse">
-            {[...words2, ...words2].map((word, i) => (
-              <Row2Item
-                key={i}
+        {/* ROW 2 */}
+        <div className="flex whitespace-nowrap mb-5 md:mb-7 max-w-full">
+          <div className="flex w-max" ref={row2Ref}>
+            {track2.map((word, i) => (
+              <MarqueeItem
+                key={`r2-${i}`}
                 word={word}
                 style={wordStyles2[i % words2.length]}
+                sm
               />
             ))}
           </div>
         </div>
-      </section>
-    </>
+      </div>
+
+      {/* ── FADE MASKS (EDGES & TOP/BOTTOM) ── */}
+      <div className="absolute top-0 bottom-0 left-0 w-[15vw] z-20 pointer-events-none bg-gradient-to-r from-black to-transparent" />
+      <div className="absolute top-0 bottom-0 right-0 w-[15vw] z-20 pointer-events-none bg-gradient-to-l from-black to-transparent" />
+
+      <div className="absolute top-0 left-0 right-0 h-32 z-20 pointer-events-none bg-gradient-to-b from-black via-black/80 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 z-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent" />
+    </section>
   );
 }

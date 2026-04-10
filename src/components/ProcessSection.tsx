@@ -293,6 +293,9 @@ const cardData = [
     body: "We analyse every touchpoint — traffic, conversion funnels, and revenue leaks — to build a complete picture of where growth is being left on the table.",
     metric: "2.4×",
     metricLabel: "avg. conversion lift",
+    accent: "from-blue-900/40 to-black",
+    border: "border-blue-500/20",
+    tag: "text-blue-400 bg-blue-500/10",
   },
   {
     icon: "🎯",
@@ -301,6 +304,9 @@ const cardData = [
     body: "Hyper-segmented campaigns reach the exact audience at the exact moment — eliminating wasted spend and maximising every dollar of ad budget.",
     metric: "89%",
     metricLabel: "audience accuracy",
+    accent: "from-emerald-900/40 to-black",
+    border: "border-emerald-500/20",
+    tag: "text-emerald-400 bg-emerald-500/10",
   },
   {
     icon: "🚀",
@@ -309,6 +315,9 @@ const cardData = [
     body: "Each iteration feeds the next — creating a self-reinforcing loop of data, optimisation, and compounding revenue that accelerates month over month.",
     metric: "3.1×",
     metricLabel: "YoY revenue growth",
+    accent: "from-purple-900/40 to-black",
+    border: "border-purple-500/20",
+    tag: "text-purple-400 bg-purple-500/10",
   },
 ];
 
@@ -320,50 +329,43 @@ const ProcessSection: React.FC = () => {
       {/* Extra wide wrapper to give stacked cards visual room */}
       <div className="flex flex-col lg:flex-row items-center gap-20 max-w-6xl w-full">
         {/* Left copy */}
-        <div className="flex-1 space-y-6 max-w-md">
-          <span
-            style={{
-              display: "inline-block",
-              padding: "5px 12px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              fontSize: "10px",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "rgba(255,255,255,0.38)",
-              borderRadius: "2px",
-              width: "fit-content",
-            }}
-          >
-            Our Process
-          </span>
-          <h2 className="text-5xl font-bold leading-tight">
+        <div className="flex-1 space-y-8 max-w-md z-10 relative">
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+            <span className="text-[10px] tracking-widest uppercase font-semibold text-white/70">
+              Our Process
+            </span>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-extrabold leading-[1.05] tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 font-sans">
             Built for
             <br />
             exponential
             <br />
             results.
           </h2>
-          <p className="text-white/50 text-lg leading-relaxed">
+
+          <p className="text-white/50 text-lg leading-relaxed font-light">
             Three compounding steps that turn raw data into unstoppable growth
             engines for ambitious brands.
           </p>
-          <div className="flex gap-6 pt-2">
+
+          <div className="flex flex-col gap-5 pt-6 border-t border-white/5 mt-6 w-full max-w-sm">
             {cardData.map((c, i) => (
-              <div key={i} className="flex flex-col gap-2 w-full">
-                {/* Metric */}
-                <span className="text-2xl font-bold text-white">
-                  {c.metric}
-                </span>
-
-                {/* Label */}
-                <span className="text-white/60 text-xs">{c.metricLabel}</span>
-
-                {/* Bar */}
-                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div key={i} className="flex flex-col gap-2 w-full group">
+                <div className="flex justify-between items-end">
+                  <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+                    {c.metric}
+                  </span>
+                  <span className="text-white/40 text-[11px] font-medium tracking-wide uppercase">
+                    {c.metricLabel}
+                  </span>
+                </div>
+                <div className="w-full h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-white rounded-full"
+                    className="h-full bg-gradient-to-r from-white/30 to-white rounded-full origin-left transition-transform duration-1000 group-hover:scale-x-105"
                     style={{
-                      width: i === 0 ? "80%" : i === 1 ? "65%" : "90%", // adjust per metric
+                      width: i === 0 ? "80%" : i === 1 ? "65%" : "95%",
                     }}
                   />
                 </div>

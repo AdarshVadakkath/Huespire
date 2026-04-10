@@ -149,7 +149,7 @@ const CapabilitiesSection = () => {
                             key={f.label}
                             className="flex items-center gap-3 text-sm text-zinc-700"
                           >
-                            <span className="w-7 h-7 rounded-lg border border-zinc-200 bg-zinc-50 flex items-center justify-center text-zinc-500 flex-shrink-0">
+                            <span className="w-7 h-7 rounded-lg  bg-zinc-50 flex items-center justify-center text-zinc-500 flex-shrink-0">
                               {f.icon}
                             </span>
                             {f.label}
@@ -196,7 +196,7 @@ const CapabilitiesSection = () => {
               </div>
             </div>
 
-            <div className="md:col-span-3 group relative bg-white border border-zinc-200 rounded-3xl overflow-hidden">
+            <div className="md:col-span-3 group relative bg-white  rounded-3xl overflow-hidden">
               <div className="grid md:grid-cols-2 h-full">
                 {/* LEFT SIDE */}
                 <div className="p-8 flex flex-col justify-between">

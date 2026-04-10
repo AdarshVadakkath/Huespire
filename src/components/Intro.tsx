@@ -17,7 +17,6 @@ export default function Intro({ onComplete }: IntroProps) {
   const subRef = useRef<HTMLDivElement>(null); // "Making Brands" line
   const wordBoxRef = useRef<HTMLDivElement>(null); // clipping container
   const wordRef = useRef<HTMLDivElement>(null); // the sliding big word
-  const huesRef = useRef<HTMLDivElement>(null); // HUESPIRE final reveal
 
   useEffect(() => {
     // Lock scroll while intro runs
@@ -25,13 +24,7 @@ export default function Intro({ onComplete }: IntroProps) {
 
     // Initial visibility
     gsap.set(
-      [
-        logoRef.current,
-        labelRef.current,
-        subRef.current,
-        wordBoxRef.current,
-        huesRef.current,
-      ],
+      [logoRef.current, labelRef.current, subRef.current, wordBoxRef.current],
       { opacity: 0 },
     );
 
@@ -83,49 +76,24 @@ export default function Intro({ onComplete }: IntroProps) {
     });
 
     // Fade out supporting text AND logo
-    tl.to([labelRef.current, subRef.current, wordBoxRef.current, logoRef.current], {
-      opacity: 0,
-      duration: 0.4,
-      ease: "power2.in",
-    });
-
-    // ── HUESPIRE SLAM IN ────────────────────────────────────────────────────
-    tl.fromTo(
-      huesRef.current,
-      { opacity: 0, scale: 1.35, filter: "blur(24px)" },
+    tl.to(
+      [labelRef.current, subRef.current, wordBoxRef.current, logoRef.current],
       {
-        opacity: 1,
-        scale: 1,
-        filter: "blur(0px)",
-        duration: 0.9,
-        ease: "power3.out",
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.in",
       },
-      "-=0.1",
     );
 
-    // Brief hold before auto zoom-through
-    tl.to({}, { duration: 0.4 });
-
-    // ── AUTOMATIC ZOOM-THROUGH ──────────────────────────────────────────────
-    tl.to(huesRef.current, {
-      scale: 50,
+    // ── TRANSITION TO LANDING SECTION ──────────────────
+    tl.to(overlayRef.current, {
       opacity: 0,
-      duration: 1.2,
-      ease: "power2.in",
-      onStart: () => {
-        // Start fading the entire overlay slightly early
-        gsap.to(overlayRef.current, {
-          opacity: 0,
-          duration: 0.6,
-          delay: 0.4,
-          ease: "power2.inOut",
-          onStart: () => {
-            // Restore scroll and notify App early to prevent delay
-            document.body.style.overflow = "";
-            onComplete();
-          }
-        });
-      }
+      duration: 0.8,
+      ease: "power1.inOut",
+      onComplete: () => {
+        document.body.style.overflow = "";
+        onComplete();
+      },
     });
 
     return () => {
@@ -234,19 +202,6 @@ export default function Intro({ onComplete }: IntroProps) {
           {/* content injected by GSAP .call() */}
         </div>
       </div>
-
-      {/* ── HUESPIRE final reveal (absolutely centered) ────────────────── */}
-      <div
-        ref={huesRef}
-        style={{
-          ...BIG,
-          position: "absolute",
-          transformOrigin: "center center",
-        }}
-      >
-        HUESPIRE
-      </div>
-
     </div>
   );
 }
