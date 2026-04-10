@@ -11,6 +11,7 @@ import React, {
 import type { ReactElement, ReactNode, RefObject } from "react";
 
 import gsap from "gsap";
+import { DatabaseSearch, Rocket, Target } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ export interface CardSwapProps {
   skewAmount?: number;
   easing?: "linear" | "elastic";
   children: ReactNode;
+  swapRef?: RefObject<{ swapForward: () => void; swapBackward: () => void }>;
 }
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -56,7 +58,7 @@ Card.displayName = "Card";
 
 // ─── CardSwap internals ───────────────────────────────────────────────────────
 
-type CardRef = RefObject<HTMLDivElement>;
+type CardRef = React.RefObject<HTMLDivElement | null>;
 
 interface Slot {
   x: number;
@@ -104,6 +106,7 @@ const CardSwap: React.FC<CardSwapProps> = ({
   skewAmount = 4,
   easing = "elastic",
   children,
+  swapRef,
 }) => {
   const config =
     easing === "elastic"
@@ -228,6 +231,85 @@ const CardSwap: React.FC<CardSwapProps> = ({
       });
     };
 
+    // Backward swap: brings the last card to the front
+    const swapBackward = () => {
+      if (order.current.length < 2) return;
+
+      const last = order.current[order.current.length - 1];
+      const remaining = order.current.slice(0, order.current.length - 1);
+      const elLast = refs[last].current;
+      if (!elLast) return;
+
+      const tl = gsap.timeline();
+      tlRef.current = tl;
+
+      // Bring last card in from below to front position
+      const frontSlot = makeSlot(
+        0,
+        cardDistance,
+        verticalDistance,
+        refs.length,
+      );
+
+      tl.set(elLast, { zIndex: refs.length + 1 });
+
+      tl.fromTo(
+        elLast,
+        { y: "+=700" },
+        {
+          x: frontSlot.x,
+          y: frontSlot.y,
+          z: frontSlot.z,
+          duration: config.durReturn,
+          ease: config.ease,
+        },
+      );
+
+      tl.addLabel("demote", `-=${config.durReturn * config.promoteOverlap}`);
+
+      remaining.forEach((idx, i) => {
+        const el = refs[idx].current;
+        if (!el) return;
+
+        const slot = makeSlot(
+          i + 1,
+          cardDistance,
+          verticalDistance,
+          refs.length,
+        );
+
+        tl.set(el, { zIndex: slot.zIndex }, "demote");
+
+        tl.to(
+          el,
+          {
+            x: slot.x,
+            y: slot.y,
+            z: slot.z,
+            duration: config.durMove,
+            ease: config.ease,
+          },
+          `demote+=${i * 0.15}`,
+        );
+      });
+
+      tl.call(() => {
+        order.current = [last, ...remaining];
+      });
+    };
+
+    if (swapRef) {
+      (
+        swapRef as React.MutableRefObject<{
+          swapForward: () => void;
+          swapBackward: () => void;
+        }>
+      ).current = {
+        swapForward: swap,
+        swapBackward,
+      };
+    }
+
     swap();
     intervalRef.current = window.setInterval(swap, delay);
 
@@ -287,7 +369,9 @@ const CardSwap: React.FC<CardSwapProps> = ({
 // ─── Data ────────────────────────────────────────────────────────────────────
 const cardData = [
   {
-    icon: "📊",
+    icon: <DatabaseSearch size={32} />,
+    iconGlow: "rgba(96,165,250,0.7)",
+    iconColor: "text-blue-400",
     label: "Step 01",
     title: "Data-Driven Audit",
     body: "We analyse every touchpoint — traffic, conversion funnels, and revenue leaks — to build a complete picture of where growth is being left on the table.",
@@ -298,7 +382,9 @@ const cardData = [
     tag: "text-blue-400 bg-blue-500/10",
   },
   {
-    icon: "🎯",
+    icon: <Target size={32} />,
+    iconGlow: "rgba(52,211,153,0.7)",
+    iconColor: "text-emerald-400",
     label: "Step 02",
     title: "Precision Targeting",
     body: "Hyper-segmented campaigns reach the exact audience at the exact moment — eliminating wasted spend and maximising every dollar of ad budget.",
@@ -309,7 +395,9 @@ const cardData = [
     tag: "text-emerald-400 bg-emerald-500/10",
   },
   {
-    icon: "🚀",
+    icon: <Rocket size={32} />,
+    iconGlow: "rgba(167,139,250,0.7)",
+    iconColor: "text-purple-400",
     label: "Step 03",
     title: "Compounding Growth",
     body: "Each iteration feeds the next — creating a self-reinforcing loop of data, optimisation, and compounding revenue that accelerates month over month.",
@@ -324,6 +412,10 @@ const cardData = [
 // ─── Section ─────────────────────────────────────────────────────────────────
 
 const ProcessSection: React.FC = () => {
+  const swapRef = useRef<{ swapForward: () => void; swapBackward: () => void }>(
+    { swapForward: () => {}, swapBackward: () => {} },
+  );
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-black text-white px-6">
       {/* Extra wide wrapper to give stacked cards visual room */}
@@ -374,9 +466,9 @@ const ProcessSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Right card stack — extra offset so back cards peek prominently */}
+        {/* Right card stack */}
         <div
-          className="flex-1 flex justify-center items-center"
+          className="flex-1 flex flex-col justify-center items-center gap-8"
           style={{ minHeight: 520 }}
         >
           <CardSwap
@@ -387,6 +479,7 @@ const ProcessSection: React.FC = () => {
             skewAmount={4}
             delay={3500}
             easing="elastic"
+            swapRef={swapRef}
           >
             {cardData.map((c, i) => (
               <Card
@@ -410,7 +503,17 @@ const ProcessSection: React.FC = () => {
                     >
                       {c.label}
                     </span>
-                    <span className="text-4xl">{c.icon}</span>
+                    {/* Glowing icon */}
+                    <span
+                      className={c.iconColor}
+                      style={{
+                        filter: `drop-shadow(0 0 8px ${c.iconGlow}) drop-shadow(0 0 20px ${c.iconGlow})`,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      {c.icon}
+                    </span>
                   </div>
 
                   {/* Middle content */}
@@ -436,17 +539,36 @@ const ProcessSection: React.FC = () => {
                         {c.metricLabel}
                       </p>
                     </div>
-                    <button className="text-xs text-white/50 hover:text-white transition-colors flex items-center gap-1 group">
-                      Learn more
-                      <span className="group-hover:translate-x-0.5 transition-transform inline-block">
-                        →
-                      </span>
-                    </button>
                   </div>
                 </div>
               </Card>
             ))}
           </CardSwap>
+
+          {/* Navigation Buttons */}
+          <div
+            className="flex items-center gap-4 mt-4"
+            style={{ zIndex: 20, position: "relative" }}
+          >
+            <button
+              onClick={() => swapRef.current?.swapBackward()}
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md transition-all duration-200 text-white/60 hover:text-white text-sm font-medium"
+            >
+              <span className="group-hover:-translate-x-0.5 transition-transform inline-block">
+                ←
+              </span>
+              Prev
+            </button>
+            <button
+              onClick={() => swapRef.current?.swapForward()}
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md transition-all duration-200 text-white/60 hover:text-white text-sm font-medium"
+            >
+              Next
+              <span className="group-hover:translate-x-0.5 transition-transform inline-block">
+                →
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
